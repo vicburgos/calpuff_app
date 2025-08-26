@@ -29,6 +29,14 @@ function variableSelector(context, state) {
         }
     });
 
+    state.addEventListener('change:variable', () => {
+        if (state.variable) {
+            select.value = state.variable;
+        } else {
+            select.value = defaultPlaceholder;
+        }
+    });
+
     const wrapper = document.createElement('div');
     Object.assign(wrapper.style, {
         display: 'flex',
@@ -65,8 +73,7 @@ function variableSelector(context, state) {
         }
     }
 
-    state.addEventListener('change:instance', async () => {
-        await state.loadVariables();
+    state.addEventListener('options:variables', async () => {
         updateVariableOptions();
     });
     updateVariableOptions();

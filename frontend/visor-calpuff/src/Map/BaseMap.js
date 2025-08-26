@@ -10,18 +10,18 @@ import { background } from './Layers/Background.js';
 import { placesGenerator } from './Layers/Places.js';
 import { contourGenerator } from './Layers/Contour.js';
 import { windGenerator } from './Layers/Wind.js';
-import { domainStaticGenerator } from './Layers/Domain.js';
+import { domainGenerator } from './Layers/Domain.js';
 import { setupMousePosition } from './Widget/MousePosition.js';
 import { setupPopup } from './Widget/Popup.js';
 
 
-function mapGenerator(context, state) {
+async function mapGenerator(context, state) {
 
     const mapContainer = document.createElement('div');
     mapContainer.id = 'map';
     const layersBackground = [
-        background.black,
         background.white,
+        background.black,
         background.satellite,
         background.openStreet,
     ]
@@ -30,11 +30,7 @@ function mapGenerator(context, state) {
         target: mapContainer,
         layers: layersBackground.concat([background.topo]),
         view: new View({
-            center: fromLonLat([
-                context.ref_lon,
-                context.ref_lat
-            ]),
-            zoom: 9.5,
+            zoom: 8,
         }),
         controls: []
     });
@@ -45,26 +41,26 @@ function mapGenerator(context, state) {
             map.removeControl(control);
         }
     });
-    // Remove Interaction
-    map.getInteractions().forEach(function (interaction) {
-        if (interaction instanceof MouseWheelZoom || interaction instanceof DragPan) {
-            map.removeInteraction(interaction);
-        }
-    });
-    // Agregamos un MouseWheelZoom que solo se activa con Ctrl
-    map.addInteraction(new MouseWheelZoom({
-        condition: platformModifierKeyOnly,
-        duration: 250
-    }));
-    // Agregamos un DragPan que solo se activa con Ctrl
-    map.addInteraction(new DragPan({
-        condition: platformModifierKeyOnly,
-        kinetic: null, // Desactivamos la inercia
-    }));
+    // // Remove Interaction
+    // map.getInteractions().forEach(function (interaction) {
+    //     if (interaction instanceof MouseWheelZoom || interaction instanceof DragPan) {
+    //         map.removeInteraction(interaction);
+    //     }
+    // });
+    // // Agregamos un MouseWheelZoom que solo se activa con Ctrl
+    // map.addInteraction(new MouseWheelZoom({
+    //     condition: platformModifierKeyOnly,
+    //     duration: 250
+    // }));
+    // // Agregamos un DragPan que solo se activa con Ctrl
+    // map.addInteraction(new DragPan({
+    //     condition: platformModifierKeyOnly,
+    //     kinetic: null, // Desactivamos la inercia
+    // }));
 
-    // // Agregamos domainLayer
-    // const domainLayer = domainStaticGenerator(context, state);
-    // map.addLayer(domainLayer);
+    // Agregamos domainLayer
+    const domainLayer = await domainGenerator(context, state, map);
+    map.addLayer(domainLayer);
     
     // Agregamos contourLayer and colormap
     const [contourLayer, colorMapContainer] = contourGenerator(context, state, map);
@@ -79,7 +75,6 @@ function mapGenerator(context, state) {
     mapContainer.appendChild(wrapperColorMap);
     contourLayer.setZIndex(2);
     map.addLayer(contourLayer);
-
 
     // Switches
     const wrapperSwitch = document.createElement('div');
@@ -109,6 +104,7 @@ function mapGenerator(context, state) {
     wrapperSwitch.appendChild(switchWindHtml);
     vectorLayerWind.setZIndex(3);
     map.addLayer(vectorLayerWind);
+    // switchWindHtml.querySelector('input').click();
 
     // Agregamos Mouse
     const mouseContainer = setupMousePosition(map)
@@ -121,8 +117,7 @@ function mapGenerator(context, state) {
     mapContainer.appendChild(mouseContainer);
     
     // Agregamos Popup
-    setupPopup(map);
-
+    setupPopup(context, state, map);
 
     //// TODO: Modular
     // Agregamos selector de capa

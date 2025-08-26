@@ -2,7 +2,7 @@
   <div style="height: 100%;"> 
     <el-splitter>
 
-      <el-splitter-panel size="35%" style="border-right:10px solid silver">
+      <el-splitter-panel size="35%" style="border-right:5px solid silver">
 
         <div id="vue-panel-table" class="box">
           <h5>Especies</h5>
@@ -14,7 +14,7 @@
       <el-splitter-panel size="65%">
 
         <el-splitter layout="vertical">
-          <el-splitter-panel size="65%" style="border-bottom:10px solid silver">
+          <el-splitter-panel size="65%" style="border-bottom:5px solid silver">
           <div
             id="vue-panel-map" 
             v-loading="loading" 

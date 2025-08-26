@@ -15,7 +15,9 @@ export function serieGenerator(context, state, map, panelSerie) {
             min: startDate.getTime() + context.startHour * 60 * 60 * 1000,
             max: startDate.getTime() + context.endHour * 60 * 60 * 1000,
         },
-        yAxis: { title: { text: 'µg/m³', rotation: 0, x: -25, useHTML: true }, min: 0, max: 250 },
+        yAxis: { title: { text: 'µg/m³', rotation: 0, x: -25, useHTML: true }
+            , min: 0, max: 250 
+        },
         plotOptions: { area: { stacking: "normal" } },
         tooltip: {
             formatter: function() {
@@ -25,7 +27,7 @@ export function serieGenerator(context, state, map, panelSerie) {
         },
         accessibility: { enabled: false },
         credits: {enabled: false},
-        series: [{ name: 'MP10', data: [], color: 'darkorange', fillOpacity: 0.5 }],
+        series: [{ name: 'MP10', data: [], color: 'red', fillOpacity: 0.5 }],
     });
 
     function updateIndicator() {
@@ -43,12 +45,6 @@ export function serieGenerator(context, state, map, panelSerie) {
     let latSerie = null;
     // Escuchar evento para generar serie
     document.addEventListener('serie:start', async (e) => {
-        if (!state.currentData) {
-            alert("Seleccione una variable para generar la serie");
-            return;
-        }
-
-        document.dispatchEvent(new CustomEvent('loading2:start'));
         // Revisamos si hay lat lon en e
         if (e.detail && e.detail.lon && e.detail.lat) {
             //Update lonSerie and latSerie
@@ -71,14 +67,17 @@ export function serieGenerator(context, state, map, panelSerie) {
             const timestamp = startDate.getTime() + t * context.ref_dt * 60 * 1000;
             serieData.push([timestamp, val]);
 
-            // cada 10 iteraciones dejamos que el browser refresque UI
-            if (t % 10 === 0) {
-                await new Promise(resolve => setTimeout(resolve, 0));
-            }
+            // // cada 10 iteraciones dejamos que el browser refresque UI
+            // if (t % 10 === 0) {
+            //     await new Promise(resolve => setTimeout(resolve, 0));
+            // }
         }
         Chart.series[0].setData(serieData, true);
-
-        document.dispatchEvent(new CustomEvent('loading2:end'));
         document.dispatchEvent(new CustomEvent('serie:end'));
+    });
+    document.addEventListener('serie:clean', async (e) => {
+        lonSerie = null;
+        latSerie = null;
+        Chart.series[0].setData([], true);
     });
 }

@@ -8,6 +8,12 @@ import { SwitchFactory } from '../../utils/SwitchOnOFF/0_SwitchContainer.js';
 import { Point } from 'ol/geom';
 
 export function windGenerator(context, state) {
+    const triangleUrl = 'data:image/svg+xml;utf8,' + encodeURIComponent(`
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20">
+            <polygon points="10,20 6,0 14,0" fill="black"/>
+        </svg>
+    `);
+
     //// OL
     const features = new Collection();
     const vectorSource = new VectorSource();
@@ -16,17 +22,18 @@ export function windGenerator(context, state) {
     const vectorLayerWind = new VectorLayer({
         source: vectorSource,
         visible: false,
+        opacity: 0.6,
         updateWhileInteracting: true,
         updateWhileAnimating: true,
     });
 
     async function setGrid(){
         // HARD CODE para la grilla de viento
-        let windy = 'mp10_ld_v10';
-        const windyData  = await state.getData(state.domain, state.instance, windy);
+        let varReference = 'mp10_ld_v10';
+        const Data  = await state.getData(state.domain, state.instance, varReference);
         
-        const LON = windyData.valuesXX
-        const LAT = windyData.valuesYY
+        const LON = Data.valuesXX
+        const LAT = Data.valuesYY
         features.clear();
         LON.map((_, index) => {
             const feature = new Feature({
@@ -35,22 +42,6 @@ export function windGenerator(context, state) {
             features.push(feature);
         });
     }
-
-    //// HTML
-    const switchWindHtml = SwitchFactory.create('switch-wind', 'Viento');
-    switchWindHtml.querySelector('input').addEventListener('change', () => {
-        switchWindHtml.classList.toggle('active');
-        switchWindHtml.classList.contains('active')
-            ? (setGrid(), setWind(), vectorLayerWind.setVisible(true))
-            : vectorLayerWind.setVisible(false);
-    });
-
-    const triangleUrl = 'data:image/svg+xml;utf8,' + encodeURIComponent(`
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20">
-            <polygon points="10,20 6,0 14,0" fill="dodgerblue"/>
-        </svg>
-    `);
-
 
     async function setWind() {
         vectorSource.clear();
@@ -88,15 +79,23 @@ export function windGenerator(context, state) {
     }
 
     state.addEventListener('change:instance', async () => {
-        switchWindHtml.classList.contains('active')
+        switchWindHtml.querySelector('input').checked 
             ?await (setGrid, setWind()):
             null
     });
 
     state.addEventListener('change:frame', async () => {
-        switchWindHtml.classList.contains('active')
+        switchWindHtml.querySelector('input').checked 
             ?await setWind():
             null
+    });
+
+    //// HTML
+    const switchWindHtml = SwitchFactory.create('switch-wind', 'Viento');
+    switchWindHtml.querySelector('input').addEventListener('click', () => {
+        switchWindHtml.querySelector('input').checked 
+            ? (setGrid(), setWind(), vectorLayerWind.setVisible(true))
+            : vectorLayerWind.setVisible(false);
     });
 
     return [switchWindHtml, vectorLayerWind];

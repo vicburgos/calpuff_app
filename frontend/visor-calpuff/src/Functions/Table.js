@@ -173,10 +173,14 @@ async function tableGenerator(context, state, map) {
     state.addEventListener('change:variable', async () => {
         if (!state.variable) {
             table.setData([]);
+            tableData = [];
+            vectorSource.clear();
         }
     });
 
-    state.addEventListener('change:variableReady', async () => {
+    document.addEventListener('table:start', async () => {
+        table.setData([]);
+        tableData = [];
         vectorSource.clear();
         if (state.variable) {
             let geoJsonSources = state.currentData.geoJsonSources;

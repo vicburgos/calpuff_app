@@ -1,13 +1,13 @@
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
 
-function builder(input, allowedDates) {
+function builder(input, allowedDates, defaultInstance) {
     flatpickr(input, {
         enable: allowedDates.map(d => {
             const [year, month, day] = d.split('_')[0].split('-').map(Number);
             return new Date(year, month - 1, day); // Date en zona horaria local
         }),
-        defaultDate: allowedDates[allowedDates.length-1],
+        defaultDate: defaultInstance,
         allowInput: false,
     });
 }
@@ -28,11 +28,13 @@ function dateSelector(context, state) {
     
     // Set date
     let allowedDates = state.instances || [];
-    builder(input, allowedDates);
+    builder(input, allowedDates, state.instance);
 
     input.addEventListener('change', (event) => {
         const selectedDate = event.target.value;
-        state.date = selectedDate;
+        const instances = state.instances;
+        const matchedInstance = instances.find(inst => inst.startsWith(selectedDate));
+        state.instance = matchedInstance;
     });
 
     icon.addEventListener('click', () => {

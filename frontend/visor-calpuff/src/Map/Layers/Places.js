@@ -6,16 +6,8 @@ import { Style, Fill, Stroke, Circle as CircleStyle, Text } from 'ol/style.js';
 import { SwitchFactory } from '../../utils/SwitchOnOFF/0_SwitchContainer.js';
 
 function placesGenerator(context) {
+    //// OL
     const data = context.places;
-
-    //// HTML
-    const switchLabelsHtml = SwitchFactory.create('switch-labels', 'Etiquetas');
-    switchLabelsHtml.querySelector('input').addEventListener('click', () => {
-        switchLabelsHtml.querySelector('input').checked
-            ? vectorLayerLabels.setVisible(true)
-            : vectorLayerLabels.setVisible(false);
-    });
-
     const vectorSource = new VectorSource({
         features: new GeoJSON().readFeatures(data, {
             featureProjection: 'EPSG:3857' // Proyección del mapa (Web Mercator)
@@ -79,6 +71,15 @@ function placesGenerator(context) {
             });
         }
     });
+
+    //// HTML
+    const switchLabelsHtml = SwitchFactory.create('switch-labels', 'Etiquetas');
+    switchLabelsHtml.querySelector('input').addEventListener('click', () => {
+        switchLabelsHtml.querySelector('input').checked
+            ? vectorLayerLabels.setVisible(true)
+            : vectorLayerLabels.setVisible(false);
+    });
+
     return [switchLabelsHtml, vectorLayerLabels]
 }
 

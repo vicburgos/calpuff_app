@@ -136,30 +136,6 @@ function contourGenerator(context, state, map) {
         }
     }
 
-    // VIEW
-    function setView() {
-        let minLAT     = context.domains[state.domain].LAT.min;
-        let minLON     = context.domains[state.domain].LON.min;
-        let maxLAT     = context.domains[state.domain].LAT.max;
-        let maxLON     = context.domains[state.domain].LON.max;
-
-        let extent = [minLON, minLAT, maxLON, maxLAT];
-
-        // 2. Transformar el extent a EPSG:3857
-        let extentTransformed = transformExtent(extent, 'EPSG:4326', 'EPSG:3857');
-
-        // 3. Obtener el nivel de zoom basado en el extent
-        let view = map.getView();
-        let resolution = view.getResolutionForExtent(extentTransformed, map.getSize());
-
-        // 4. Calcular el nuevo centro del dominio
-        let fixPosition =  0;
-        let center = fromLonLat([(extent[0] + extent[2]) * 0.5, (extent[1] + extent[3]) * 0.5 - fixPosition]);
-
-        //5. Animación de cambio de dominio
-        view.animate({ center: center, zoom: view.getZoomForResolution(resolution*1.2), duration: 1000 });
-    }
-
     // CONTOUR
     function setContour(vectorLayer, interpolate=colorsMap[1].interpolate) {
         const data     = state.currentData;
@@ -183,7 +159,7 @@ function contourGenerator(context, state, map) {
 
 
         // Aplicar blur para suavizar los datos antes de calcular los contornos
-        blur2({ data: values, width: nx, height: ny }, 0.2);
+        blur2({ data: values, width: nx, height: ny }, 0.1);
         
         let contourData = contours()
             .size([nx, ny])
@@ -204,10 +180,10 @@ function contourGenerator(context, state, map) {
             coordinates.forEach(rings => {
                 const feature = new Feature({ geometry: new MultiPolygon(rings) });
                 feature.setStyle(new Style({
-                    stroke: new Stroke({
-                        color: 'grey',
-                        width: 0.01,
-                    }),
+                    // stroke: new Stroke({
+                    //     color: 'grey',
+                    //     width: 0.1,
+                    // }),
                     fill: new Fill({
                         color: cmap,
                     })
@@ -227,10 +203,16 @@ function contourGenerator(context, state, map) {
     });
 
     // Estados
+    state.addEventListener('change:instance', async () => {
+        await state.loadVariables();
+        state.dispatchEvent(new CustomEvent('change:variable'));
+    });
+
     state.addEventListener('change:variable', async () => {
         if (state.variable) {
             await state.setCurrentData();
-            state.dispatchEvent(new CustomEvent('change:variableReady'));
+            document.dispatchEvent(new CustomEvent('table:start'));
+            document.dispatchEvent(new CustomEvent('serie:start'));
             state.dispatchEvent(new CustomEvent('change:frame'));
             setColorbar(colorsMap[currentOption].interpolate);
         } else {
@@ -247,13 +229,6 @@ function contourGenerator(context, state, map) {
         state.variable
             ? setContour(contourLayer, colorsMap[currentOption].interpolate)
             : contourSource.clear();
-    });
-
-    // Inicialización
-    map.once('postrender', () => {
-        requestAnimationFrame(() => {
-            state.dispatchEvent(new CustomEvent('change:domain'));
-        });
     });
 
     return [contourLayer, colorMapContainer]

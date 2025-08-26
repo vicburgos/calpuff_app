@@ -111,13 +111,13 @@ export async function getData(domain, instance, var_name) {
     function valuesApi(t, z) {
         const start = (t * nz * ny * nx) + (z * ny * nx);
         const end = start + (ny * nx);
-        return [...valuesToReturn.subarray(start, end)];
+        return valuesToReturn.subarray(start, end);
     }
 
     function valuesApiZ(t) {
         const start = t * nz * ny * nx;
         const end = start + (nz * ny * nx);
-        return [...valuesToReturn.subarray(start, end)];
+        return valuesToReturn.subarray(start, end);
     }
 
     return {

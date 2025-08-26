@@ -22,7 +22,6 @@ import { selectorGenerator } from './Controls/Selector/Wrapper.js';
 
 
 async function main() {
-
   // Generamos el contexto
   const context = new Context();
   await context.init();
@@ -32,7 +31,7 @@ async function main() {
   window.state = state;
 
   // Agregamos el mapa
-  const { mapContainer, map } = mapGenerator(context, state);
+  const { mapContainer, map } = await mapGenerator(context, state);
   Object.assign(mapContainer.style, {
     position: "relative",
     height: "100%",
@@ -66,6 +65,8 @@ async function main() {
     right: '10px',
   });
   mapContainer.appendChild(reproductorContainer);
-}
 
+  //Iniciación
+  state.variable = state.variables.find(variable => variable.startsWith('mp10')) || state.variables[0];
+}
 main();

@@ -1,6 +1,6 @@
 import 'ol/ol.css';
 import './stylePopup.css';
-import { toLonLat } from 'ol/proj';
+import { toLonLat, fromLonLat } from 'ol/proj.js';
 import Overlay from 'ol/Overlay';
 import { Popover } from 'bootstrap';
 import VectorLayer from 'ol/layer/Vector';
@@ -12,8 +12,10 @@ import { Select } from 'ol/interaction';
 import {altKeyOnly, click, pointerMove} from 'ol/events/condition.js';
 import { Circle, Fill, Stroke } from 'ol/style.js';
 import { Style } from 'ol/style.js';
+import { polygonContains } from 'd3-polygon';
 
-// Draw
+
+// Draw ol
 const vectorSource = new VectorSource();
 const vectorLayer = new VectorLayer({
   source: vectorSource,
@@ -22,14 +24,13 @@ const vectorLayer = new VectorLayer({
 const pointSerie = new Feature();
 const stylePoint = new Style({
   image: new Circle({
-    radius: 5,
-    fill: new Fill({ color: 'rgba(255, 140, 0, 0.47)' }),
-    stroke: new Stroke({ color: 'darkorange', width: 2 }),
+    radius: 7,
+    fill: new Fill({ color: 'rgba(255, 0, 0, 0.3)' }),
+    stroke: new Stroke({ color: 'rgba(255, 0, 0, 1)', width: 2 }),
   }),
 });
 pointSerie.setStyle(stylePoint);
 vectorSource.addFeature(pointSerie);
-
 const modify = new Modify({
     source: vectorSource,
     condition: () => true,              // permite el arrastre
@@ -39,6 +40,7 @@ const modify = new Modify({
 });
 const select = new Select({
   condition: click,
+  layers: [vectorLayer],
   style: stylePoint,
 });
 
@@ -48,7 +50,23 @@ popupContainer.className = 'ol-popup';
 Object.assign(popupContainer.style, {
   userSelect: 'none',
 });
-
+const contentPopup = document.createElement('div');
+Object.assign(contentPopup.style, {
+  position: 'relative',
+  fontSize: '12px',
+  display: 'flex',
+  flexDirection: 'column',
+  paddingRight: '5px',
+});
+const closePopupButton = document.createElement('button'); //Boton de cerrar
+closePopupButton.className = 'btn-close';
+Object.assign(closePopupButton.style, {
+  position: 'absolute',
+  top: '-12px',
+  right: '-12px',
+  width: '6px',
+  height: '6px',
+});
 // Overlay ol
 const overlay = new Overlay({
   element: popupContainer,
@@ -57,7 +75,7 @@ const overlay = new Overlay({
   updateWhileInteracting: true,
 });
 
-function setupPopup(map) {
+function setupPopup(context, state, map) {
   map.addLayer(vectorLayer);
   map.addInteraction(modify);
   map.addInteraction(select);
@@ -65,88 +83,52 @@ function setupPopup(map) {
   map.getViewport().addEventListener('contextmenu', (e) => e.preventDefault());
 
   map.on('contextmenu', (event) => {
-    const coordinate = event.coordinate;
+    if (!state.currentData) {
+        alert("Seleccione una variable para generar la serie");
+        return;
+    }
+    let coordinate = event.coordinate;
+    let [lon, lat] = toLonLat(coordinate);
     pointSerie.setGeometry(new Point(coordinate));
-    generatePopover(coordinate);
+    if (polygonContains(context.borderCoords, [lon, lat])) {
+      document.dispatchEvent(new CustomEvent('serie:start', {detail: {lon: lon,lat: lat}}));
+    } else {
+      alert("El punto seleccionado no contiene datos");
+      document.dispatchEvent(new CustomEvent('serie:clean'));
+      closePopupButton.click();
+    }
   });
 
   modify.on('modifyend', async (event) => {
-    const coordinate = event.features.item(0).getGeometry().getCoordinates();
-    generatePopover(coordinate);
+    let coordinate = event.features.item(0).getGeometry().getCoordinates();
+    let [lon, lat] = toLonLat(coordinate);
+    pointSerie.setGeometry(new Point(coordinate));
+    closePopupButton.click();
+    if (polygonContains(context.borderCoords, [lon, lat])) {
+      document.dispatchEvent(new CustomEvent('serie:start', {detail: {lon: lon,lat: lat}}));
+    } else {
+      alert("El punto seleccionado no contiene datos");
+      document.dispatchEvent(new CustomEvent('serie:clean'));
+      closePopupButton.click();
+    }
   });
 
-  select.on('select', (event) => {
-    const coordinate = event.selected[0].getGeometry().getCoordinates();
+  select.on('select', () => {
+    select.getFeatures().clear(); // Limpiamos el select de los features selecionados (problema de togle)
+    let coordinate = pointSerie.getGeometry().getCoordinates();
     generatePopover(coordinate);
   });
 
   function generatePopover(coordinate) {
+    //// Destruir popover previo
+    contentPopup.innerHTML = '';
     overlay.setPosition(coordinate);
-    // Destruir popover previo
     let existingPopover = Popover.getInstance(popupContainer);
     if (existingPopover) {
       existingPopover.dispose();
     }
-
-    //// Generamos el contenido
-    const contentPopup = document.createElement('div');
-    Object.assign(contentPopup.style, {
-      position: 'relative',
-      fontSize: '12px',
-      display: 'flex',
-      flexDirection: 'column',
-      paddingRight: '5px',
-    });
-    // Agregamos boton de cerrar
-    const closeButton = document.createElement('button');
-    closeButton.className = 'btn-close';
-    Object.assign(closeButton.style, {
-      position: 'absolute',
-      top: '-12px',
-      right: '-12px',
-      width: '6px',
-      height: '6px',
-    });
-    closeButton.onclick = () => {
-      popover.hide();
-      setTimeout(() => {
-        overlay.setPosition(undefined);
-      }, 200);
-    };
-    contentPopup.appendChild(closeButton);
-    // Agregamos span con coordenadas
-    const [lon, lat] = toLonLat(coordinate);
-    const coordSpan = document.createElement('span');
-    coordSpan.innerHTML = `<i class="bi bi-crosshair" aria-hidden="true"></i> (${lat.toFixed(3)}, ${lon.toFixed(3)})`
-    contentPopup.appendChild(coordSpan);
-    // Agregamos boton para generar serie
-    const serieButton = document.createElement('button');
-    serieButton.type = 'button';
-    Object.assign(serieButton.style, {
-      backgroundColor: 'transparent',
-      border: 'none',
-      userSelect: 'none',
-      color: 'dodgerblue',
-      width: '100%',
-      textAlign: 'left',
-    });
-    serieButton.textContent = 'Generar serie';
-    serieButton.onclick = () => {
-      const event = new CustomEvent('serie:start', {
-        detail: {
-          lon: lon,
-          lat: lat,
-        },
-      });
-      document.dispatchEvent(event);
-    };
-    contentPopup.appendChild(serieButton);
-    document.addEventListener('serie:end', () => {
-      closeButton.click();
-    });
-    //// End-Generamos el contenido
   
-    //// Generamos y mostramos el nuevo Popover
+    //// Generamos el nuevo Popover
     const popover = new Popover(popupContainer, {
       animation: true,
       trigger: 'manual',
@@ -156,6 +138,44 @@ function setupPopup(map) {
       html: true,
       delay: { "show": 200, "hide": 200 },
     });
+
+    //// Generamos el contenido
+    closePopupButton.onclick = () => {
+      popover.hide();
+      setTimeout(() => {
+        overlay.setPosition(undefined);
+      }, 200);
+    };
+    contentPopup.appendChild(closePopupButton);
+    const title = document.createElement('h6'); //Titulo: Serie puntual
+    title.textContent = 'Serie de tiempo';
+    title.style.marginTop = '5px';
+    title.style.marginBottom = '5px';
+    contentPopup.appendChild(title);
+    const [lon, lat] = toLonLat(coordinate); //Span: coordenadas
+    const coordSpan = document.createElement('span');
+    coordSpan.innerHTML = `<i class="bi bi-crosshair" aria-hidden="true"></i> (${lat.toFixed(3)}, ${lon.toFixed(3)})`
+    contentPopup.appendChild(coordSpan);
+
+    // Agregamos boton para quitar la feature
+    const removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    Object.assign(removeButton.style, {
+      backgroundColor: 'transparent',
+      border: 'none',
+      userSelect: 'none',
+      color: 'dodgerblue',
+      width: '100%',
+      textAlign: 'left',
+    });
+    removeButton.textContent = 'Quitar selección';
+    removeButton.onclick = () => {
+      pointSerie.setGeometry(null);
+      closePopupButton.click();
+      document.dispatchEvent(new CustomEvent('serie:clean'));
+    };
+    contentPopup.appendChild(removeButton);
+    //// Mostramos el popover
     popover.show();    
   }
 

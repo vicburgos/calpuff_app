@@ -49,7 +49,7 @@ export class State extends EventTarget {
         this.#domain     = context.domains[0];
         this.#instance   = null;
         this.#variable   = null;
-        this.#frame      = 0;
+        this.#frame      = Math.floor(context.startHour * 60 / context.ref_dt)
         this.#level      = 0;
 
         this.cache       = {};   // para guardar datos precargados
@@ -81,13 +81,9 @@ export class State extends EventTarget {
             const json = await res.json();
             this.instances = json.instances || [];
 
-            // si la instancia actual ya no esta disponible, movemos a la ultima
             if (!this.instances.includes(this.#instance)) {
-                const value = this.instances[this.instances.length - 1] || null;
+                const value = this.instances.sort()[this.instances.length-1] || null;
                 this.instance = value;
-            } else {
-                // si se mantiene, aseguramos recargar variables
-                await this.loadVariables();
             }
         }
         this.dispatchEvent(new CustomEvent("options:instances", { detail: this.instances }));
@@ -97,16 +93,11 @@ export class State extends EventTarget {
     async loadVariables() {
         if (!this.#domain || !this.#instance) {
             this.variables = [];
-            this.#variable = null;
         } else {
             const res = await fetch(`/api/variables/?domain=${this.#domain}&instance=${this.#instance}`);
             const json = await res.json();
             this.variables = json.variables || [];
 
-            // si la variable actual ya no existe hacemos null
-            if (!this.variables.includes(this.#variable)) {
-                this.variable = null;
-            }
         }
         this.dispatchEvent(new CustomEvent("options:variables", { detail: this.variables }));
     }

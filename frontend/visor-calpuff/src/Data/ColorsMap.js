@@ -22,27 +22,38 @@ function TransformHexToRGB(hex) {
     return [r, g, b];
 }
 
+function trasparencyFunction(t) {
+    let trasparency;
+    (t < 0.5)
+        ? trasparency=0.2 + 0.8 * (t / 0.5) // De 0.4 a 1
+        : trasparency=1
+    return trasparency;
+}
+
 // COLORS MAP
 export const colorsMap = {
     1: {
         interpolate: (t) => {
           const rgbValue = interpolateRainbow(1-(0.1 + 0.9 * t))
           const rgbsplit = rgbValue.match(/\d+/g);
-          return `rgba(${rgbsplit[0]}, ${rgbsplit[1]}, ${rgbsplit[2]}, 0.8)`;
+          const transparency = trasparencyFunction(t);
+          return `rgba(${rgbsplit[0]}, ${rgbsplit[1]}, ${rgbsplit[2]}, ${transparency})`;
         },
     },
     2: {
         interpolate: (t) => {
           const rgbValue = interpolatePuRd(0.3 + 0.7 * t)
           const rgbsplit = rgbValue.match(/\d+/g);
-          return `rgba(${rgbsplit[0]}, ${rgbsplit[1]}, ${rgbsplit[2]}, 0.7)`;
+          const transparency = trasparencyFunction(t);
+          return `rgba(${rgbsplit[0]}, ${rgbsplit[1]}, ${rgbsplit[2]}, ${transparency})`;
         },
     },
     3: {
         interpolate: (t) => {
           const rgbValue = interpolatePlasma(0.2 + 0.8 * t)
           const rgbsplit = TransformHexToRGB(rgbValue);
-          return `rgba(${rgbsplit[0]}, ${rgbsplit[1]}, ${rgbsplit[2]}, 0.8)`;
+          const transparency = trasparencyFunction(t);
+          return `rgba(${rgbsplit[0]}, ${rgbsplit[1]}, ${rgbsplit[2]}, ${transparency})`;
         },
     },
 }
