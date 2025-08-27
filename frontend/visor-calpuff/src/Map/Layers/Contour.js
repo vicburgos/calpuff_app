@@ -100,7 +100,7 @@ function contourGenerator(context, state, map) {
             .attr("text-anchor", "middle")
             .style("font-size", "12px")
             .style("fill", "white")
-            .style("text-shadow", "0px 0px 4px rgba(0, 0, 0, 1)")
+            .style("text-shadow", "0px 0px 6px rgba(0, 0, 0, 1)")
             .style("font-weight", "bold")
             .style("font-family", "Arial")
             .text(d => d);
@@ -124,7 +124,7 @@ function contourGenerator(context, state, map) {
                 .style("position", "absolute")
                 .style("left", extra/2 - 12 + "px")
                 .style("font-size", "12px")
-                .style("text-shadow", "0px 0px 4px rgba(0, 0, 0, 1)")
+                .style("text-shadow", "0px 0px 6px rgba(0, 0, 0, 1)")
                 .style("font-family", "Arial")
                 .style("color", "white")
                 .style("opacity", 0)
@@ -213,15 +213,16 @@ function contourGenerator(context, state, map) {
             await state.setCurrentData();
             document.dispatchEvent(new CustomEvent('table:start'));
             document.dispatchEvent(new CustomEvent('serie:start'));
-            state.dispatchEvent(new CustomEvent('change:frame'));
+            setContour(contourLayer, colorsMap[currentOption].interpolate)
             setColorbar(colorsMap[currentOption].interpolate);
         } else {
             colorMapContainer.innerHTML = '';
             contourSource.clear();
+            document.dispatchEvent(new CustomEvent('serie:clean'));
         }
     });
     state.addEventListener('change:frame', () => {
-        state.variable
+        state.variable 
             ? setContour(contourLayer, colorsMap[currentOption].interpolate)
             : contourSource.clear();
     });

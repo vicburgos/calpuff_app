@@ -71,6 +71,9 @@ function reproductorGenerator(context, state) {
       state.frame = frame;
       SetInputRangeLabel(frame);
   });
+  state.addEventListener('change:instance', () => {
+    SetInputRangeLabel(state.frame);
+  });
 
   //// Animacion
   const framepersecond  = 23;

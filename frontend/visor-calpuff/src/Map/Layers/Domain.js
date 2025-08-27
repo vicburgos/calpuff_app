@@ -96,7 +96,7 @@ async function domainGenerator(context, state, map) {
         //5. Animación de cambio de dominio
         view.animate({
             center: center,
-            resolution: 100,
+            resolution: 200,
             duration: 1000,
         });
     }
