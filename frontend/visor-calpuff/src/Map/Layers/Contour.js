@@ -22,7 +22,7 @@ function contourGenerator(context, state, map) {
         justifyContent: 'center',
         userSelect: 'none',
     });
-    async function setColorbar(interpolate = colorsMap[0].interpolate) {
+    async function setColorbar(interpolate = colorsMap[1].interpolate) {
         const height = 23;
         const width = 480;
         const extra = 50;
@@ -133,7 +133,7 @@ function contourGenerator(context, state, map) {
         updateWhileInteracting: true,
         updateWhileAnimating: true,
     });
-    function setContour(vectorLayer, interpolate = colorsMap[0].interpolate) {
+    function setContour(vectorLayer, interpolate = colorsMap[1].interpolate) {
         const data = state.currentData;
         const ny = data.ny;
         const nx = data.nx;
@@ -170,6 +170,7 @@ function contourGenerator(context, state, map) {
                     return fromLonLat([lon, lat]);
                 }))
             );
+
             const cmap = interpolateDiscrete(idx / thresholds.length);
             coordinates.forEach(rings => {
                 const feature = new Feature({ geometry: new MultiPolygon(rings) });
