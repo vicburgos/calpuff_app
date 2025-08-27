@@ -22,24 +22,14 @@ function contourGenerator(context, state, map) {
         justifyContent: 'center',
         userSelect: 'none',
     });
-
-    // Contour
-    const contourSource = new VectorSource()
-    const contourLayer = new VectorLayer({
-        source: contourSource,
-        updateWhileInteracting: true,
-        updateWhileAnimating: true,
-    });
-
-    // Discretizar interpolate según interval (hasta totalScale)
-    async function setColorbar(interpolate=colorsMap[1].interpolate) {
-        const height= 23;
+    async function setColorbar(interpolate = colorsMap[0].interpolate) {
+        const height = 23;
         const width = 480;
         const extra = 50;
         colorMapContainer.innerHTML = '';
         const colorbar = select("#colorbar")
-            .style("width", `${width+ extra}px`)
-            .style("height", `${height }px`)
+            .style("width", `${width + extra}px`)
+            .style("height", `${height}px`)
 
         // Crear el div para el gradiente (canvas)
         const grad = colorbar.append("div")
@@ -58,15 +48,15 @@ function contourGenerator(context, state, map) {
         const canvas = grad.append("canvas")
             .attr("width", width + extra)
             .attr("height", 1)
-            .style("width", `${width+extra}px`)
+            .style("width", `${width + extra}px`)
             .style("height", `${height}px`)
             .style("border-radius", "10px");
 
         const data = state.currentData;
         const thresholds = data.attrs.thresholds;
         const interpolateDiscrete = (t) => {
-            const idx = Math.floor(t*thresholds.length);
-            return interpolate(idx/thresholds.length);
+            const idx = Math.floor(t * thresholds.length);
+            return interpolate(idx / thresholds.length);
         }
 
         const canvasContext = canvas.node().getContext("2d");
@@ -82,8 +72,8 @@ function contourGenerator(context, state, map) {
 
         // Crear el SVG para los ticks en el div tick
         const svg = tick.append("svg")
-            .attr("width", width + extra )
-            .attr("height",height)
+            .attr("width", width + extra)
+            .attr("height", height)
             .style("color", "white");
 
         const gx = svg.append("g")
@@ -95,8 +85,8 @@ function contourGenerator(context, state, map) {
         const ticks = gx.selectAll("text")
             .data(thresholds)
             .join("text")
-            .attr("x", d => extra + scale(d) + scale.bandwidth()*0.5)
-            .attr("y", height*0.6 )
+            .attr("x", d => extra + scale(d) + scale.bandwidth() * 0.5)
+            .attr("y", height * 0.6)
             .attr("text-anchor", "middle")
             .style("font-size", "12px")
             .style("fill", "white")
@@ -107,7 +97,7 @@ function contourGenerator(context, state, map) {
 
         ticks.transition()
             .duration(600)
-            .attr("x", d => extra + scale(d) + scale.bandwidth()*0.5)
+            .attr("x", d => extra + scale(d) + scale.bandwidth() * 0.5)
             .attr("opacity", 1);
 
         // Agregar unidad (si existe)
@@ -122,13 +112,13 @@ function contourGenerator(context, state, map) {
             const unitToShow = colorbar.append("div")
                 .attr("id", "unit")
                 .style("position", "absolute")
-                .style("left", extra/2 - 12 + "px")
+                .style("left", extra / 2 - 12 + "px")
                 .style("font-size", "12px")
                 .style("text-shadow", "0px 0px 6px rgba(0, 0, 0, 1)")
                 .style("font-family", "Arial")
                 .style("color", "white")
                 .style("opacity", 0)
-                .html(latexRender);         
+                .html(latexRender);
 
             unitToShow.transition()
                 .duration(600)
@@ -137,37 +127,42 @@ function contourGenerator(context, state, map) {
     }
 
     // CONTOUR
-    function setContour(vectorLayer, interpolate=colorsMap[1].interpolate) {
-        const data     = state.currentData;
-        const ny       = data.ny;
-        const nx       = data.nx;
-        const nz       = data.nz;
+    const contourSource = new VectorSource()
+    const contourLayer = new VectorLayer({
+        source: contourSource,
+        updateWhileInteracting: true,
+        updateWhileAnimating: true,
+    });
+    function setContour(vectorLayer, interpolate = colorsMap[0].interpolate) {
+        const data = state.currentData;
+        const ny = data.ny;
+        const nx = data.nx;
+        const nz = data.nz;
         const emVector = data.emVector;
-        let values     = data.valuesApi(0, 0).map(() => 0); // format (ny, nx)
+        let values = data.valuesApi(0, 0).map(() => 0); // format (ny, nx)
         for (let z = 0; z < nz; z++) {
             const valuesZ = data.valuesApi(state.frame, z);
             for (let i = 0; i < ny * nx; i++) {
-                values [i] += valuesZ[i] * emVector[z];
+                values[i] += valuesZ[i] * emVector[z];
             }
         }
 
-        const thresholds  = colorsMap['default']?.thresholds || data.attrs.thresholds;
+        const thresholds = colorsMap['default']?.thresholds || data.attrs.thresholds;
         const interpolateDiscrete = (t) => {
-            const idx = Math.floor(t*thresholds.length);
-            return interpolate(idx/thresholds.length);
+            const idx = Math.floor(t * thresholds.length);
+            return interpolate(idx / thresholds.length);
         }
-
 
         // Aplicar blur para suavizar los datos antes de calcular los contornos
         blur2({ data: values, width: nx, height: ny }, 0.1);
-        
+
         let contourData = contours()
             .size([nx, ny])
             .thresholds(thresholds)(values);
-        
+
         let vectorSource = vectorLayer.getSource();
         vectorSource.clear();
-        
+
         contourData.forEach((contour, idx) => {
             const coordinates = contour.coordinates.map(rings =>
                 rings.map(ring => ring.map(([x, y]) => {
@@ -175,7 +170,6 @@ function contourGenerator(context, state, map) {
                     return fromLonLat([lon, lat]);
                 }))
             );
-            // Obtener el indice de threshold asociado al contour.value
             const cmap = interpolateDiscrete(idx / thresholds.length);
             coordinates.forEach(rings => {
                 const feature = new Feature({ geometry: new MultiPolygon(rings) });
@@ -202,6 +196,7 @@ function contourGenerator(context, state, map) {
         setContour(contourLayer, colorsMap[currentOption].interpolate);
     });
 
+    // TODO: Reimplementar fuera de las view (layers), para así generar en un controlador
     // Estados
     state.addEventListener('change:instance', async () => {
         await state.loadVariables();
@@ -222,7 +217,7 @@ function contourGenerator(context, state, map) {
         }
     });
     state.addEventListener('change:frame', () => {
-        state.variable 
+        state.variable
             ? setContour(contourLayer, colorsMap[currentOption].interpolate)
             : contourSource.clear();
     });

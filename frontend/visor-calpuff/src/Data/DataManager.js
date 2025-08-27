@@ -17,8 +17,6 @@ export class Context {
                 this.startHour       = data.startHour;
                 this.endHour         = data.endHour;
                 this.optionLocalTime = data.optionLocalTime;
-                this.ref_lat         = data.ref_lat;
-                this.ref_lon         = data.ref_lon;
                 this.ref_dt          = data.ref_dt;
                 this.domains         = data.domains;
                 this.places          = data.places;

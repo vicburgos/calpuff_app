@@ -1,6 +1,6 @@
 import {
     interpolatePlasma,
-    interpolatePuRd,
+    interpolateCividis,
     interpolateViridis,
     interpolateRainbow,
 } from 'd3';
@@ -42,16 +42,16 @@ export const colorsMap = {
     },
     2: {
         interpolate: (t) => {
-          const rgbValue = interpolatePuRd(0.3 + 0.7 * t)
-          const rgbsplit = rgbValue.match(/\d+/g);
+          const rgbValue = interpolatePlasma(0.2 + 0.8 * t)
+          const rgbsplit = TransformHexToRGB(rgbValue);
           const transparency = trasparencyFunction(t);
           return `rgba(${rgbsplit[0]}, ${rgbsplit[1]}, ${rgbsplit[2]}, ${transparency})`;
         },
     },
     3: {
         interpolate: (t) => {
-          const rgbValue = interpolatePlasma(0.2 + 0.8 * t)
-          const rgbsplit = TransformHexToRGB(rgbValue);
+          const rgbValue = interpolateCividis(0.3 + 0.7 * t)
+          const rgbsplit = rgbValue.match(/\d+/g);
           const transparency = trasparencyFunction(t);
           return `rgba(${rgbsplit[0]}, ${rgbsplit[1]}, ${rgbsplit[2]}, ${transparency})`;
         },

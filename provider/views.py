@@ -12,8 +12,6 @@ hoursRun        = 24*7          # Total hours of the simulation
 startHour       = 4             # Start hour of the simulation
 endHour         = hoursRun - 1  # End hour of the simulation
 optionLocalTime = True          # Use local time or not
-ref_lat         = -22.55        # Central point (Latitude)
-ref_lon         = -69.8         # Central point (Longitude)
 ref_dt          = 15            # Time step of the data (minutes)
 domains         = ['antucoya']  # List of domains available. Usually only one domain is used.
 places = {
@@ -54,8 +52,6 @@ class ContextAPI(View):
             "startHour": startHour,
             "endHour"  : endHour,
             "optionLocalTime": optionLocalTime,
-            "ref_lat" : ref_lat,
-            "ref_lon" : ref_lon,
             "ref_dt"  : ref_dt,
             "domains" : domains,
             "places"  : geoCollection,
