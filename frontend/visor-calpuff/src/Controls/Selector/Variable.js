@@ -77,7 +77,10 @@ function variableSelector(context, state) {
         updateVariableOptions();
     });
     updateVariableOptions();
-
+    state.variable
+        ?select.value = state.variable
+        : null;
+        
     return wrapper;
 }
 export { variableSelector };

@@ -22,8 +22,11 @@ function dateSelector(context, state) {
     input.id = 'date-selector';
     input.title = 'Selecciona una fecha';
     Object.assign(input.style, {
-        width: '70px',
         userSelect: 'none',
+        width: '100px',
+        border: '0px',
+        backgroundColor: 'transparent',
+        paddingLeft: '12px',
     });
     
     // Set date
@@ -49,6 +52,7 @@ function dateSelector(context, state) {
         justifyContent: 'center',
         userSelect: 'none',
         gap: '5px',
+        fontSize: '14px',
     });
     wrapper.appendChild(icon);
     wrapper.appendChild(input);

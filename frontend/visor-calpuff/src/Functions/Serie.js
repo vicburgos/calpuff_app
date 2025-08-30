@@ -22,14 +22,19 @@ function updateStartDateAxis(instance, context) {
 
 export function serieGenerator(context, state, map, panelSerie) {
     const Chart = Highcharts.chart(panelSerie, {
-        chart: { type: "area", zoomType: "x" },
+        chart: { 
+            type: "area", 
+            zoomType: "x" ,
+            animation: false,
+            marginBottom: 70
+        },
         title: { text: '' },
         xAxis: updateStartDateAxis(state.instance, context),
         yAxis: {
             title: { text: 'µg/m³', rotation: 0, x: -25, useHTML: true },
-            min: 0, max: 150
+            min: 0, max: 250
         },
-        plotOptions: { area: { stacking: "normal" } },
+        plotOptions: { area: { stacking: false }, series: { animation: false } },
         tooltip: {
             formatter: function () {
                 return `<b>${this.series.name}</b>: ${Highcharts.numberFormat(this.y, 2)} µg/m³<br>` +
@@ -38,7 +43,8 @@ export function serieGenerator(context, state, map, panelSerie) {
         },
         accessibility: { enabled: false },
         credits: { enabled: false },
-        series: [{ name: 'MP10', data: [], color: 'red', fillOpacity: 0.5 }],
+        // Generar una serie vacia
+        series: [{}],
     });
 
     // Actualiza el plot line del frame
@@ -51,24 +57,29 @@ export function serieGenerator(context, state, map, panelSerie) {
         Chart.xAxis[0].addPlotLine({
             id: 'time-indicator',
             color: 'dodgerblue',
-            width: 1,
+            width: 2,
             value: startDate.getTime() + state.frame * context.ref_dt * 60 * 1000,
         });
+    }
+
+    while (Chart.series.length > 0) {
+        Chart.series[0].remove(false);
     }
 
     // Actualiza el eje X cuando cambia la instancia
     function updateXAxis() {
         if (!state.instance) return;
         Chart.update({
-            xAxis: updateStartDateAxis(state.instance, context)
+            xAxis: updateStartDateAxis(state.instance, context),
         });
     }
-
     state.addEventListener('change:frame', () => {
         updateIndicator();
     });
     state.addEventListener('change:instance', () => {
-        Chart.series[0].setData([], true);
+        while (Chart.series.length > 0) {
+            Chart.series[0].remove(false);
+        }
         updateXAxis();
         updateIndicator();
     });
@@ -76,36 +87,72 @@ export function serieGenerator(context, state, map, panelSerie) {
     let lonSerie = null;
     let latSerie = null;
 
-    document.addEventListener('serie:start', async (e) => {
+    document.addEventListener('serie:start', (e) => {
         if (!state.instance || !state.variable) return;
-
-        const startDate = parseInstanceToDate(state.instance, context);
 
         if (e.detail?.lon && e.detail?.lat) {
             lonSerie = e.detail.lon;
             latSerie = e.detail.lat;
         }
+
         if (!lonSerie || !latSerie) return;
 
+        const startDate = parseInstanceToDate(state.instance, context);
         const data = state.currentData;
+        const geoJsonSources = state.currentData.geoJsonSources;
+        const totalProjects = 'total';
+        const projectsAndTotal = [...state.currentData.projects, totalProjects];
         const [i, j] = data.proj_lonlat_to_ij(lonSerie, latSerie);
-        const { nx, nz, nt, emVector } = data;
+        const { nx, nz, nt, emVector, abVector } = data;
 
-        const serieData = [];
+        // generate a object with keys given by projects and empty array as value   
+        const SeriePerProjects = {};
+        projectsAndTotal.forEach(p => SeriePerProjects[p] = []);
+        
         for (let t = 0; t < nt; t++) {
-            let val = 0;
-            for (let z = 0; z < nz; z++) {
-                val += data.valuesApi(t, z)[j * nx + i] * emVector[z];
+            const framePerProject = {};
+            projectsAndTotal.forEach(p => framePerProject[p] = 0);
+              for (let z = 0; z < nz; z++) {
+                let project = geoJsonSources.features[z].properties.project;
+                let value= data.valuesApi(t, z)[j * nx + i] * emVector[z] * (1-abVector[z]/100);
+                framePerProject[project]       += value;
+                framePerProject[totalProjects] += value;
             }
             const timestamp = startDate.getTime() + t * context.ref_dt * 60 * 1000;
-            serieData.push([timestamp, val]);
+            projectsAndTotal.forEach(p => {
+                SeriePerProjects[p].push([timestamp, framePerProject[p]]);
+            });
         }
-        Chart.series[0].setData(serieData, true);
+
+        while (Chart.series.length > 0) {
+            Chart.series[0].remove(false);
+        }
+        projectsAndTotal.forEach((p, idx) => {
+            (p==totalProjects)
+                ?Chart.addSeries({
+                    name: p.toUpperCase(),
+                    data: SeriePerProjects[p],
+                    color: "black",
+                    dashStyle: 'ShortDash',
+                    fillOpacity: 0
+                }, false)
+                :Chart.addSeries({
+                    name: p.toUpperCase(),
+                    data: SeriePerProjects[p],
+                    color: Highcharts.getOptions().colors[idx % Highcharts.getOptions().colors.length],
+                    fillOpacity: 0.5
+                }, false)
+        }); 
+        Chart.redraw(); // dibuja todas las series juntas
         document.dispatchEvent(new CustomEvent('serie:end'));
     });
 
     document.addEventListener('serie:clean', () => {
-        Chart.series[0].setData([], true);
+        while (Chart.series.length > 0) {
+            Chart.series[0].remove(false); // false = no redibujar inmediatamente
+        }
+        lonSerie = null;
+        latSerie = null;
     });
 }
 

@@ -55,6 +55,8 @@ export async function getData(domain, instance, var_name) {
     let specie = var_name.split('_')[0]
     let dataSources = await fetch(`/api/sources/?&domain=${domain}&instance=${instance}&species=${specie}`);
     let geoJsonSources = await dataSources.json();
+    // Obtener los project existentes como properties de cada feature
+    let projects = [...new Set(geoJsonSources.features.map(f => f.properties.project))];
     let abVector =
         compress == 'uint8' ? new Uint8Array(nz) :
             compress == 'float16' ? new Float16Array(nz) :
@@ -64,8 +66,8 @@ export async function getData(domain, instance, var_name) {
             compress == 'float16' ? new Float16Array(nz) :
                 new Float32Array(nz);
 
-    abVector[0] = 1; // El primer nivel no se puede abatir
-    emVector[0] = 3000; // El primer nivel siempre emite
+    abVector[0] = 0;
+    emVector[0] = 3000;
 
     // Creamos proyeccion
     const ZLON = structureArray(
@@ -135,6 +137,7 @@ export async function getData(domain, instance, var_name) {
         valuesXX: valuesToReturnXX,
         valuesYY: valuesToReturnYY,
         geoJsonSources: geoJsonSources,
+        projects: projects,
         abVector: abVector,
         emVector: emVector,
     };

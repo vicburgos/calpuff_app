@@ -144,12 +144,15 @@ export class State extends EventTarget {
         return `${domain}__${instance}__${variable}`;
     }
 
-    async loadData(domain, instance,  variable) {
+    async loadData(domain, instance, variable) {
         const key = this._cacheKey(domain, instance,  variable);
         if (this.cache[key]) {
             return this.cache[key];
         }
         document.dispatchEvent(new CustomEvent('loading:start'));
+        if (this.variables.includes(variable)){
+            document.dispatchEvent(new CustomEvent('loading3:start'));
+        }
         try {
             const data      = await getData(domain, instance, variable);
             this.cache[key] = data;
@@ -158,6 +161,9 @@ export class State extends EventTarget {
             this.cache[key] = null;
         }
         document.dispatchEvent(new CustomEvent('loading:end'));
+        if (this.variables.includes(variable)){
+            document.dispatchEvent(new CustomEvent('loading3:end'));
+        }
         return this.cache[key];
     }
 

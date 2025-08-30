@@ -7,6 +7,7 @@ import { fromLonLat } from 'ol/proj.js';
 
 import { TabulatorFull as Tabulator } from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator_simple.css';
+
 import { LineString, Polygon, Point } from 'ol/geom.js';
 
 function formaterText(text) {
@@ -21,16 +22,38 @@ function formaterText(text) {
 async function tableGenerator(context, state, map) {
 
     const loadButton = document.createElement('button');
-    loadButton.textContent = "Cargar datos";
+    loadButton.textContent = "Generar escenario";
     loadButton.classList.add('btn', 'btn-secondary')
     Object.assign(loadButton.style, {
         fontSize: '12px',
-        margin: '5px',
         fontWeight: 'bold',
         userSelect: 'none',
         fontFamily: 'Arial, sans-serif',
         height: '30px',
+        maxWidth: '1000px',
+        width: '98%',
+        marginTop: '5px',
+        marginBottom: '5px',
+        alignSelf: 'center',
     });
+
+    const downloadButton = document.createElement('button');
+    downloadButton.textContent = "Descargar CSV";
+    downloadButton.id = "download-csv";
+    downloadButton.classList.add('btn', 'btn-secondary')
+    Object.assign(downloadButton.style, {
+        fontSize: '12px',
+        fontWeight: 'bold',
+        userSelect: 'none',
+        fontFamily: 'Arial, sans-serif',
+        height: '30px',
+        maxWidth: '1000px',
+        width: '98%',
+        marginTop: '5px',
+        marginBottom: '5px',
+        alignSelf: 'center',
+    });
+
 
     const tableHtml = document.createElement('div');
     tableHtml.style.width = "100%";
@@ -78,9 +101,9 @@ async function tableGenerator(context, state, map) {
         columns: [
             { title: "Id", field: "id_inner", headerSort: false, hozAlign: "center", width: 50, resizable: false },
             { title: "Fuente", field: "emisid", width: 180 },
-            { title: "Faena", field: "project", headerSort: false, width: 80 },
+            { title: "Faena", field: "project", width: 80 },
             { title: "Abatimiento (%)", field: "abatimiento", sorter: "number", hozAlign: "left", editor: "input", editor: true, validator: ["min:0", "max:100", "numeric"] },
-            { title: "Emisión (kg/día)", field: "emision", sorter: "number", hozAlign: "left", editor: "input", editor: true, validator: ["min:0", "numeric"] },
+            { title: "Emisión (kg/día)", field: "emision", sorter: "number", hozAlign: "left", editor: "input", editor: true, validator: ["min:0", "max:100000"] },
         ],
     });    
 
@@ -158,9 +181,13 @@ async function tableGenerator(context, state, map) {
             state.dispatchEvent(new CustomEvent('change:frame'));
             document.dispatchEvent(new CustomEvent('serie:start'));
         } else {
-            alert("Seleccione una variable para cargar datos");
+            alert("Seleccione una especie para generar el escenario");
         }
         
+    });
+    // Funcionalidad para descargar CSV
+    downloadButton.addEventListener('click', async () => {
+        table.download("csv", "table_data.csv");
     });
     // Funcionalidad con Enter
     document.addEventListener('keydown', function (event) {
@@ -170,14 +197,12 @@ async function tableGenerator(context, state, map) {
         }
     });
     
-    state.addEventListener('change:variable', async () => {
-        if (!state.variable) {
-            table.setData([]);
-            tableData = [];
-            vectorSource.clear();
-        }
+    document.addEventListener('table:clean', () => {
+        table.setData([]);
+        tableData = [];
+        vectorSource.clear();
     });
-
+    
     document.addEventListener('table:start', async () => {
         table.setData([]);
         tableData = [];
@@ -190,7 +215,7 @@ async function tableGenerator(context, state, map) {
         }
     });
 
-    return [tableHtml, loadButton];
+    return [tableHtml, loadButton, downloadButton];
 }
 
 export { tableGenerator };

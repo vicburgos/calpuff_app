@@ -29,9 +29,10 @@ async function mapGenerator(context, state) {
     const map = new Map({
         target: mapContainer,
         layers: layersBackground.concat([background.topo]),
-        view: new View({
-            zoom: 8,
-        }),
+        // view: new View({
+        //     zoom: 6,
+        //     center: fromLonLat([-70.392, -23.650]),
+        // }),
         controls: []
     });
 
@@ -59,24 +60,33 @@ async function mapGenerator(context, state) {
     // }));
 
     // Agregamos domainLayer
-    const domainLayer = await domainGenerator(context, state, map);
+    const [domainLayer, setBorder] = await domainGenerator(context, state, map);
     map.addLayer(domainLayer);
+    domainLayer.setZIndex(5);
     
     // Agregamos contourLayer and colormap
-    const [contourLayer, colorMapContainer] = contourGenerator(context, state, map);
-    const wrapperColorMap = document.createElement('div');
-    Object.assign(wrapperColorMap.style, {
+    const [contourLayer, colorMapContainer, setContour, setColorbar] = contourGenerator(context, state, map);
+    Object.assign(colorMapContainer.style, {
         position: 'absolute',
         bottom: '40px',
         right: '10px',
     });
-    wrapperColorMap.id = 'wrapper-colorbar';
-    wrapperColorMap.appendChild(colorMapContainer);
-    mapContainer.appendChild(wrapperColorMap);
-    contourLayer.setZIndex(2);
+    mapContainer.appendChild(colorMapContainer);
     map.addLayer(contourLayer);
+    contourLayer.setZIndex(2);   
 
-    // Switches
+    // Agregamos Switch-Places
+    const [switchLabelsHtml, vectorLayerLabels] = placesGenerator(context, map);
+    map.addLayer(vectorLayerLabels);
+    vectorLayerLabels.setZIndex(4);
+    switchLabelsHtml.querySelector('input').click();
+
+    // Agregamos Switch-Viento
+    const [switchWindHtml, vectorLayerWind, setWind, setGrid] = windGenerator(context, state);
+    map.addLayer(vectorLayerWind);
+    vectorLayerWind.setZIndex(3);
+
+    // Switches Wrap
     const wrapperSwitch = document.createElement('div');
     Object.assign(wrapperSwitch.style, {
         position: 'absolute',
@@ -90,21 +100,8 @@ async function mapGenerator(context, state) {
     });
     wrapperSwitch.id = 'switches';
     mapContainer.appendChild(wrapperSwitch);
-
-    // Agregamos Switch-Places
-    const [switchLabelsHtml, vectorLayerLabels] = placesGenerator(context, map)
-    wrapperSwitch.appendChild(switchLabelsHtml);
-    vectorLayerLabels.setZIndex(4);
-    map.addLayer(vectorLayerLabels);
-    // Activamos el switch por defecto
-    switchLabelsHtml.querySelector('input').click();
-
-    // Agregamos Switch-Viento
-    const [switchWindHtml, vectorLayerWind] = windGenerator(context, state);
     wrapperSwitch.appendChild(switchWindHtml);
-    vectorLayerWind.setZIndex(3);
-    map.addLayer(vectorLayerWind);
-    // switchWindHtml.querySelector('input').click();
+    wrapperSwitch.appendChild(switchLabelsHtml);
 
     // Agregamos Mouse
     const mouseContainer = setupMousePosition(map)
@@ -124,6 +121,12 @@ async function mapGenerator(context, state) {
     const select = document.createElement('select');
     select.id = 'layer-selector';
     select.title = 'Selecciona una capa';
+    Object.assign(select.style, {
+        userSelect: 'none',
+        width: '100px',
+        border: '0px',
+        backgroundColor: 'transparent',
+    });
     // Agregamos opciones segun layersBackground
     layersBackground.forEach((layer, index) => {
         const option = document.createElement('option');
@@ -145,36 +148,74 @@ async function mapGenerator(context, state) {
     });
     // Select default layer
     select.dispatchEvent(new Event('change'));
-    const wrapperSelect = document.createElement('div');
-    Object.assign(wrapperSelect.style, {
-        position: 'absolute',
-        top: '10px',
-        left: '10px',
-
+    const wrapperSelectLayer = document.createElement('div');
+    Object.assign(wrapperSelectLayer.style, {
         display: 'flex',
         flexDirection: 'row',
-        gap: '10px',
+        gap: '5px',
         alignItems: 'center',
         paddingLeft: '5px',
         paddingRight: '5px',
+        fontSize: '14px',
 
-        background: 'white',
+        backgroundColor: 'rgba(255, 255, 255, 1)',
         userSelect: 'none',
-        fontSize: '12px',
-        height: '30px',
+        height: '35px',
         borderRadius: '5px',
+        border: '1px solid rgba(0, 0, 0, 1)',
     });
     const iconSelect = document.createElement('i');
     iconSelect.classList.add("bi", "bi-stack");
-    Object.assign(iconSelect.style, {
-        marginLeft: '5px',
-    });
-    wrapperSelect.appendChild(iconSelect);
-    wrapperSelect.appendChild(select);
-    mapContainer.appendChild(wrapperSelect);
+    wrapperSelectLayer.appendChild(iconSelect);
+    wrapperSelectLayer.appendChild(select);
     ////End-TODO: Modular
 
-    return { mapContainer, map }
+
+    //// Manejo de Estados del tipo set
+    state.addEventListener('change:domain', async () => {
+        await setBorder();
+        state.dispatchEvent(new CustomEvent('change:instance'));
+    });
+    state.addEventListener('change:instance', async () => {
+        await state.loadVariables();
+        switchWindHtml.querySelector('input').checked
+            ? await (setGrid(), setWind()) :
+            null
+        state.dispatchEvent(new CustomEvent('change:variable'));
+    });
+
+    state.addEventListener('change:variable', async () => {
+        if (state.variable) {
+            await state.setCurrentData();
+            document.dispatchEvent(new CustomEvent('table:start'));
+            document.dispatchEvent(new CustomEvent('serie:start'));
+            setContour()
+            setColorbar();
+        } else {
+            setColorbar(false);
+            setContour(false);
+            document.dispatchEvent(new CustomEvent('table:clean'));
+            document.dispatchEvent(new CustomEvent('serie:clean'));
+        }
+    });
+    state.addEventListener('change:frame', async () => {
+        if (state.variable) {
+            setContour();
+        } else {
+            setContour(false);
+        }
+        switchWindHtml.querySelector('input').checked
+            ? await setWind() :
+            null
+    });
+
+    //Inicializacion
+    map.once('postrender', () => {
+        // state.variable = state.variables.find(v => v.startsWith('mp10')) || state.variables[0];
+        state.dispatchEvent(new CustomEvent('change:domain'));
+    });
+    
+    return { mapContainer, map, wrapperSelectLayer }
 }
 
 export { mapGenerator };

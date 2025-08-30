@@ -84,7 +84,7 @@ function setupPopup(context, state, map) {
 
   map.on('contextmenu', (event) => {
     if (!state.currentData) {
-        alert("Seleccione una variable para generar la serie");
+        alert("Seleccione una especie para generar la serie");
         return;
     }
     let coordinate = event.coordinate;

@@ -24,8 +24,8 @@ function TransformHexToRGB(hex) {
 
 function trasparencyFunction(t) {
     let trasparency;
-    (t < 0.5)
-        ? trasparency=0.2 + 0.8 * (t / 0.5) // De 0.4 a 1
+    (t < 0.6)
+        ? trasparency=0.2 + 0.8 * (t / 0.6) // De 0.4 a 1
         : trasparency=1
     return trasparency;
 }

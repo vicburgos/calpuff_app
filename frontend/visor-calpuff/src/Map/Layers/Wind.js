@@ -16,7 +16,9 @@ function triangleGenerator(colorWind) {
     return triangleUrl;
 }
 
-export function windGenerator(context, state) {
+function windGenerator(context, state) {
+    //
+    const scaleTriangle = 0.8;
     //// OL
     const features = new Collection();
     const vectorSource = new VectorSource();
@@ -25,7 +27,7 @@ export function windGenerator(context, state) {
     const vectorLayerWind = new VectorLayer({
         source: vectorSource,
         visible: false,
-        opacity: 0.4,
+        opacity: 0.7,
         updateWhileInteracting: true,
         updateWhileAnimating: true,
     });
@@ -75,24 +77,24 @@ export function windGenerator(context, state) {
                     src: triangleGenerator(colorWind),
                     rotation: angle,
                     rotateWithView: true,
-                    scale: scale,
+                    scale: scale*scaleTriangle,
                 })
             }));
             vectorSource.addFeature(feature);
         });
     }
 
-    state.addEventListener('change:instance', async () => {
-        switchWindHtml.querySelector('input').checked
-            ? await (setGrid, setWind()) :
-            null
-    });
+    // state.addEventListener('change:instance', async () => {
+    //     switchWindHtml.querySelector('input').checked
+    //         ? await (setGrid, setWind()) :
+    //         null
+    // });
 
-    state.addEventListener('change:frame', async () => {
-        switchWindHtml.querySelector('input').checked
-            ? await setWind() :
-            null
-    });
+    // state.addEventListener('change:frame', async () => {
+    //     switchWindHtml.querySelector('input').checked
+    //         ? await setWind() :
+    //         null
+    // });
 
     //// HTML
     const switchWindHtml = SwitchFactory.create('switch-wind', 'Viento');
@@ -116,5 +118,7 @@ export function windGenerator(context, state) {
         }
     });
 
-    return [switchWindHtml, vectorLayerWind];
+    return [switchWindHtml, vectorLayerWind, setWind, setGrid];
 }
+
+export { windGenerator };

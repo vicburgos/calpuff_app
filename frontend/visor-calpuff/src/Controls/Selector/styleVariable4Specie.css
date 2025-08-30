@@ -1,0 +1,6 @@
+.btn-sm {
+  width: 75px;
+  height: 18px;
+  --bs-btn-font-size: .75rem;
+  --bs-btn-padding-y: .0rem; 
+}

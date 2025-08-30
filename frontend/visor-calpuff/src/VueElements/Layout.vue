@@ -4,9 +4,8 @@
 
       <el-splitter-panel size="35%" style="border-right:5px solid silver">
 
-        <div id="vue-panel-table" class="box">
-          <h5>Especies</h5>
-          <h6>Fuentes Emisoras</h6>
+        <div id="vue-panel-table" class="box" v-loading="loading3" element-loading-text="Un momento..." 
+          element-loading-background="rgba(255, 255, 255, 0.4)">
         </div>
       
       </el-splitter-panel>
@@ -20,7 +19,7 @@
             v-loading="loading" 
             element-loading-text="Cargando datos..."
             class="loading-wrapper" 
-            element-loading-background="rgba(0, 0, 0, 0.7)"
+            element-loading-background="rgba(255, 255, 255, 0.4)"
           >
           </div>
           </el-splitter-panel>
@@ -28,10 +27,9 @@
           <el-splitter-panel size="35%">
           <div 
             id="vue-panel-serie"
-            v-loading="loading2" 
-            element-loading-text="Generando serie..."
+            v-loading="loading3" 
             class="loading-wrapper"
-            element-loading-background="rgba(0, 0, 0, 0.1)"
+            element-loading-background="rgba(255, 255, 255, 0.4)"
           >
           </div>
           </el-splitter-panel>
@@ -48,12 +46,16 @@ import { ref, onMounted } from 'vue';
 
 const loading = ref(false);
 const loading2 = ref(false);
+const loading3 = ref(false);
 onMounted(() => {
   document.addEventListener('loading:start', () => loading.value = true);
   document.addEventListener('loading:end', () => loading.value = false);
 
   document.addEventListener('loading2:start', () => loading2.value = true);
   document.addEventListener('loading2:end', () => loading2.value = false);
+
+  document.addEventListener('loading3:start', () => loading3.value = true);
+  document.addEventListener('loading3:end', () => loading3.value = false);
 });
 
 </script>
@@ -61,15 +63,16 @@ onMounted(() => {
 <style scoped>
 #vue-panel-map {
   height: 100%;
-  background-color:  rgba(34, 34, 34, 1);
+  background-color: #f0f0f0;
 }
 #vue-panel-serie {
   height: 100%;
   padding-top: 10px;
-  padding-left: 25px;
+  padding-left: 22px;
   padding-right: 10px;
 }
 #vue-panel-table {
+  padding-left: 5px;
   height: 100%;
 }
 
@@ -90,5 +93,14 @@ onMounted(() => {
 }
 ::v-deep(.el-splitter-bar__dragger) {
     opacity: 0;
+}
+::v-deep(#vue-panel-map .el-loading-text) {
+  font-size: 20px;
+}
+::v-deep(#vue-panel-serie .el-loading-spinner .circular) {
+  display: none !important;
+}
+::v-deep(#vue-panel-table .el-loading-spinner) {
+  display: none !important;
 }
 </style>

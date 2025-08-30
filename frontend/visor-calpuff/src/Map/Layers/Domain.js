@@ -10,12 +10,16 @@ import { transformExtent } from 'ol/proj';
 
 
 async function domainGenerator(context, state, map) {
-    const myFeatures = new VectorSource();
+
+    const vectorSource = new VectorSource();
     const lineFeature = new Feature();
+    const domainLayer = new VectorLayer({
+        source: vectorSource,
+    });
 
     async function setBorder() {
         // HARD CODE para la variable lat-lon
-        let varReference = 'mp10_hd_lon';
+        let varReference = state.variable || 'mp10_hd_lon';
         const Data  = await state.getData(state.domain, state.instance, varReference);
         const nx = Data.nx;
         const ny = Data.ny;
@@ -67,12 +71,12 @@ async function domainGenerator(context, state, map) {
                 width: 3,
             }),
             fill: new Fill({
-                color: 'rgba(0, 0, 0, 0.15)',
+                color: 'rgba(0, 0, 0, 0.1)',
             }),
         }));
 
-        myFeatures.clear();
-        myFeatures.addFeature(lineFeature);
+        vectorSource.clear();
+        vectorSource.addFeature(lineFeature);
 
         // SET VIEW
         let minLAT     = Math.min(...borderCoords.map(coord => coord[1]));
@@ -86,30 +90,13 @@ async function domainGenerator(context, state, map) {
         let extentTransformed = transformExtent(extent, 'EPSG:4326', 'EPSG:3857');
 
         // 3. Obtener el nivel de zoom basado en el extent
-        let view = map.getView();
-        let resolution = view.getResolutionForExtent(extentTransformed, map.getSize());
-
-        // 4. Calcular el nuevo centro del dominio
-        let fixPosition =  0;
-        let center = fromLonLat([(extent[0] + extent[2]) * 0.5, (extent[1] + extent[3]) * 0.5 - fixPosition]);
-
-        //5. Animación de cambio de dominio
-        view.animate({
-            center: center,
-            resolution: 200,
+        map.getView().fit(extentTransformed, { 
+            size: map.getSize(),
+            padding: [50, 50, 50, 50],
             duration: 1000,
         });
     }
 
-    await setBorder();
-
-    state.addEventListener('change:domain', async () => {
-        await setBorder();
-    });
-
-    return new VectorLayer({
-        source: myFeatures,
-        zIndex: 10,
-    });
+    return [domainLayer, setBorder];
 }
 export { domainGenerator };

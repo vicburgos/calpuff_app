@@ -22,9 +22,14 @@ function contourGenerator(context, state, map) {
         justifyContent: 'center',
         userSelect: 'none',
     });
-    async function setColorbar(interpolate = colorsMap[1].interpolate) {
+    let currentOptionColor = state.colorMapOption || 1;
+    function setColorbar(active=true, interpolate=colorsMap[currentOptionColor].interpolate) {
+        if (!active) {
+            colorMapContainer.innerHTML = '';
+            return;
+        }
         const height = 23;
-        const width = 480;
+        const width = 450;
         const extra = 50;
         colorMapContainer.innerHTML = '';
         const colorbar = select("#colorbar")
@@ -133,17 +138,22 @@ function contourGenerator(context, state, map) {
         updateWhileInteracting: true,
         updateWhileAnimating: true,
     });
-    function setContour(vectorLayer, interpolate = colorsMap[1].interpolate) {
+    function setContour(active=true, interpolate = colorsMap[currentOptionColor].interpolate) {
+        if (!active) {
+            contourSource.clear();
+            return;
+        }
         const data = state.currentData;
         const ny = data.ny;
         const nx = data.nx;
         const nz = data.nz;
         const emVector = data.emVector;
+        const abVector = data.abVector;
         let values = data.valuesApi(0, 0).map(() => 0); // format (ny, nx)
         for (let z = 0; z < nz; z++) {
             const valuesZ = data.valuesApi(state.frame, z);
             for (let i = 0; i < ny * nx; i++) {
-                values[i] += valuesZ[i] * emVector[z];
+                values[i] += valuesZ[i] * emVector[z] * (1-abVector[z]/100);
             }
         }
 
@@ -160,7 +170,7 @@ function contourGenerator(context, state, map) {
             .size([nx, ny])
             .thresholds(thresholds)(values);
 
-        let vectorSource = vectorLayer.getSource();
+        let vectorSource = contourSource;
         vectorSource.clear();
 
         contourData.forEach((contour, idx) => {
@@ -190,45 +200,42 @@ function contourGenerator(context, state, map) {
 
     // Candy! Change color of interpolation if colorMapContainer is clicked
     const totalOptions = Object.keys(colorsMap).length;
-    let currentOption = state.colorMapOption || 1;
     colorMapContainer.addEventListener('click', () => {
-        currentOption = (currentOption % totalOptions) + 1;
-        setColorbar(colorsMap[currentOption].interpolate);
-        setContour(contourLayer, colorsMap[currentOption].interpolate);
+        currentOptionColor = (currentOptionColor % totalOptions) + 1;
+        setColorbar();
+        setContour();
     });
 
-    // TODO: Reimplementar fuera de las view (layers), para así generar en un controlador
-    // Estados
-    state.addEventListener('change:instance', async () => {
-        await state.loadVariables();
-        state.dispatchEvent(new CustomEvent('change:variable'));
-    });
+    // // TODO: Reimplementar fuera de las view (layers), para así generar en un controlador
+    // // Estados
+    // state.addEventListener('change:instance', async () => {
+    //     await state.loadVariables();
+    //     state.dispatchEvent(new CustomEvent('change:variable'));
+    // });
 
-    state.addEventListener('change:variable', async () => {
-        if (state.variable) {
-            await state.setCurrentData();
-            document.dispatchEvent(new CustomEvent('table:start'));
-            document.dispatchEvent(new CustomEvent('serie:start'));
-            setContour(contourLayer, colorsMap[currentOption].interpolate)
-            setColorbar(colorsMap[currentOption].interpolate);
-        } else {
-            colorMapContainer.innerHTML = '';
-            contourSource.clear();
-            document.dispatchEvent(new CustomEvent('serie:clean'));
-        }
-    });
-    state.addEventListener('change:frame', () => {
-        state.variable
-            ? setContour(contourLayer, colorsMap[currentOption].interpolate)
-            : contourSource.clear();
-    });
-    state.addEventListener('change:level', () => {
-        state.variable
-            ? setContour(contourLayer, colorsMap[currentOption].interpolate)
-            : contourSource.clear();
-    });
+    // state.addEventListener('change:variable', async () => {
+    //     if (state.variable) {
+    //         await state.setCurrentData();
+    //         document.dispatchEvent(new CustomEvent('table:start'));
+    //         document.dispatchEvent(new CustomEvent('serie:start'));
+    //         setContour()
+    //         setColorbar();
+    //     } else {
+    //         setColorbar(false);
+    //         setContour(false);
+    //         document.dispatchEvent(new CustomEvent('table:clean'));
+    //         document.dispatchEvent(new CustomEvent('serie:clean'));
+    //     }
+    // });
+    // state.addEventListener('change:frame', () => {
+    //     if (state.variable) {
+    //         setContour();
+    //     } else {
+    //         setContour(false);
+    //     }
+    // });
 
-    return [contourLayer, colorMapContainer]
+    return [contourLayer, colorMapContainer, setContour, setColorbar];
 }
 export { contourGenerator };
 
