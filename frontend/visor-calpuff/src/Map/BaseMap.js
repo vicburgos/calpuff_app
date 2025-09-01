@@ -156,13 +156,13 @@ async function mapGenerator(context, state) {
         alignItems: 'center',
         paddingLeft: '5px',
         paddingRight: '5px',
-        fontSize: '14px',
+        fontSize: '13px',
+        height: '25px',
 
         backgroundColor: 'rgba(255, 255, 255, 1)',
         userSelect: 'none',
-        height: '35px',
-        borderRadius: '5px',
-        border: '1px solid rgba(0, 0, 0, 1)',
+        borderRadius: "5px",
+        border: "1.5px solid rgb(118, 118, 118)",
     });
     const iconSelect = document.createElement('i');
     iconSelect.classList.add("bi", "bi-stack");
@@ -189,7 +189,7 @@ async function mapGenerator(context, state) {
             await state.setCurrentData();
             document.dispatchEvent(new CustomEvent('table:start'));
             document.dispatchEvent(new CustomEvent('serie:start'));
-            setContour()
+            setContour();
             setColorbar();
         } else {
             setColorbar(false);
@@ -210,9 +210,12 @@ async function mapGenerator(context, state) {
     });
 
     //Inicializacion
-    map.once('postrender', () => {
-        // state.variable = state.variables.find(v => v.startsWith('mp10')) || state.variables[0];
-        state.dispatchEvent(new CustomEvent('change:domain'));
+    map.once('postrender', async () => {
+        await setBorder();
+        await state.setCurrentData();
+        setContour();
+        setColorbar();
+        document.dispatchEvent(new CustomEvent('table:start'));
     });
     
     return { mapContainer, map, wrapperSelectLayer }

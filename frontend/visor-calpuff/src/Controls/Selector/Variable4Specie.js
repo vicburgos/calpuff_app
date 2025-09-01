@@ -11,6 +11,7 @@ function Variable4SpecieSelector(context, state) {
         flexDirection: 'row',
         alignItems: 'center',
         gap: '8px',
+        borderRadius: '10px',
         paddingTop: '2px',
     });
     group.classList.add('btn-group','text-left', 'mt-2', 'mb-2');
@@ -33,7 +34,8 @@ function Variable4SpecieSelector(context, state) {
             }
 
             const label = document.createElement('label');
-            label.classList.add('btn', 'btn-outline-secondary', 'btn-sm');
+            label.style.borderRadius = '4px';
+            label.classList.add('btn', 'btn-light', 'btn-sm');
             label.setAttribute('for', input.id);
             label.textContent = variable.split("_")[0].toUpperCase();
 

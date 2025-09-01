@@ -91,6 +91,7 @@ function reproductorGenerator(context, state) {
         inputFrame.dispatchEvent(new Event('change'));
       } else {
         cancelAnimationFrame(animationId);
+        buttonPause.click();
         animationId = null;
         return;
       }
@@ -201,8 +202,17 @@ function reproductorGenerator(context, state) {
   // wrapper.appendChild(inputLevel);
   wrapper.appendChild(spanInput);
 
-
-  //TODO AJUSTAR SEGUN VARIABLE_ dt
+  // Alternar la visivilidad de los botones play and pause
+  buttonPlay.style.display  = 'inline';
+  buttonPause.style.display = 'none';
+  buttonPlay.addEventListener('click', () => {
+    buttonPlay.style.display  = 'none';
+    buttonPause.style.display = 'inline';
+  });
+  buttonPause.addEventListener('click', () => {
+    buttonPlay.style.display  = 'inline';
+    buttonPause.style.display = 'none';
+  });
 
   // // Update inputRange according to the selected domain
   // state.addEventListener('change:variable', (event) => {

@@ -10,13 +10,20 @@ function parseInstanceToDate(instance, context) {
     return date;
 }
 
-function updateStartDateAxis(instance, context) {
+function updateStartDateAxis(instance, context, units='') {
     const startDate = parseInstanceToDate(instance, context);
     if (!startDate) return {};
     return {
-        type: 'datetime',
-        min: startDate.getTime() + context.startHour * 60 * 60 * 1000,
-        max: startDate.getTime() + context.endHour * 60 * 60 * 1000,
+        xAxis:{
+            type: 'datetime',
+            min: startDate.getTime() + context.startHour * 60 * 60 * 1000,
+            max: startDate.getTime() + context.endHour * 60 * 60 * 1000,
+        },
+        yAxis: {
+            title: { text: units, rotation: 0, useHTML: true, offset: 55 },
+            min: 0, 
+            labels: { reservedSpace: true},
+        }
     };
 }
 
@@ -26,14 +33,13 @@ export function serieGenerator(context, state, map, panelSerie) {
             type: "area", 
             zoomType: "x" ,
             animation: false,
-            marginBottom: 70
+            marginBottom: 70,
+            marginRight: 20,
+            marginLeft: 92,
         },
         title: { text: '' },
-        xAxis: updateStartDateAxis(state.instance, context),
-        yAxis: {
-            title: { text: 'µg/m³', rotation: 0, x: -25, useHTML: true },
-            min: 0, max: 250
-        },
+        xAxis: updateStartDateAxis(state.instance, context).xAxis,
+        yAxis: updateStartDateAxis(state.instance, context).yAxis,
         plotOptions: { area: { stacking: false }, series: { animation: false } },
         tooltip: {
             formatter: function () {
@@ -51,28 +57,31 @@ export function serieGenerator(context, state, map, panelSerie) {
     function updateIndicator() {
         if (!state.instance) return;
         const startDate = parseInstanceToDate(state.instance, context);
-        if (!startDate) return;
-
+        
         Chart.xAxis[0].removePlotLine('time-indicator');
         Chart.xAxis[0].addPlotLine({
             id: 'time-indicator',
             color: 'dodgerblue',
-            width: 2,
+            width: 1,
             value: startDate.getTime() + state.frame * context.ref_dt * 60 * 1000,
         });
     }
-
-    while (Chart.series.length > 0) {
-        Chart.series[0].remove(false);
-    }
-
+ 
     // Actualiza el eje X cuando cambia la instancia
-    function updateXAxis() {
+    function updateAxis() {
+        let units;
+        if (state.variable){
+            units = 'µg/m³';
+        } else {
+            units = '';
+        }
         if (!state.instance) return;
         Chart.update({
-            xAxis: updateStartDateAxis(state.instance, context),
+            xAxis: updateStartDateAxis(state.instance, context).xAxis,
+            yAxis: updateStartDateAxis(state.instance, context, units).yAxis,
         });
     }
+    
     state.addEventListener('change:frame', () => {
         updateIndicator();
     });
@@ -80,7 +89,7 @@ export function serieGenerator(context, state, map, panelSerie) {
         while (Chart.series.length > 0) {
             Chart.series[0].remove(false);
         }
-        updateXAxis();
+        updateAxis();
         updateIndicator();
     });
 
@@ -97,6 +106,7 @@ export function serieGenerator(context, state, map, panelSerie) {
 
         if (!lonSerie || !latSerie) return;
 
+        updateAxis();
         const startDate = parseInstanceToDate(state.instance, context);
         const data = state.currentData;
         const geoJsonSources = state.currentData.geoJsonSources;
@@ -151,6 +161,9 @@ export function serieGenerator(context, state, map, panelSerie) {
         while (Chart.series.length > 0) {
             Chart.series[0].remove(false); // false = no redibujar inmediatamente
         }
+        Chart.update({
+            yAxis: updateStartDateAxis(state.instance, context, '').yAxis,
+        });
         lonSerie = null;
         latSerie = null;
     });

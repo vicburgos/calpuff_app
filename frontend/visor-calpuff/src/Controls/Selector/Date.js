@@ -52,7 +52,8 @@ function dateSelector(context, state) {
         justifyContent: 'center',
         userSelect: 'none',
         gap: '5px',
-        fontSize: '14px',
+        fontSize: '13px',
+        height: '25px',
     });
     wrapper.appendChild(icon);
     wrapper.appendChild(input);

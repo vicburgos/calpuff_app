@@ -106,12 +106,12 @@ function windGenerator(context, state) {
 
     window.addEventListener('darkMode', (event) => {
         if (event.detail === true) {
-            colorWind = 'rgba(255, 255, 255, 1)';
+            colorWind = 'white';
             switchWindHtml.querySelector('input').checked
                 ? setWind()
                 : null;
         } else {
-            colorWind = 'rgba(8, 0, 253, 1)';
+            colorWind = 'dodgerblue';
             switchWindHtml.querySelector('input').checked
                 ? setWind()
                 : null;

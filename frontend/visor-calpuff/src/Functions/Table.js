@@ -59,6 +59,7 @@ async function tableGenerator(context, state, map) {
     tableHtml.style.width = "100%";
     tableHtml.style.fontSize = "10px";
     tableHtml.style.fontSize = "14px";
+    tableHtml.style.userSelect = "none";
 
     const styleDeactive = new Style({
         stroke: new Stroke({
@@ -100,10 +101,10 @@ async function tableGenerator(context, state, map) {
         },
         columns: [
             { title: "Id", field: "id_inner", headerSort: false, hozAlign: "center", width: 50, resizable: false },
-            { title: "Fuente", field: "emisid", width: 180 },
+            { title: "Fuente", field: "emisid", width: 120 },
             { title: "Faena", field: "project", width: 80 },
             { title: "Abatimiento (%)", field: "abatimiento", sorter: "number", hozAlign: "left", editor: "input", editor: true, validator: ["min:0", "max:100", "numeric"] },
-            { title: "Emisión (kg/día)", field: "emision", sorter: "number", hozAlign: "left", editor: "input", editor: true, validator: ["min:0", "max:100000"] },
+            { title: "Emisión (kg/día)", field: "emision", sorter: "number", hozAlign: "left", editor: "input", editor: true, validator: ["min:0", "max:10000"] },
         ],
     });    
 
@@ -187,7 +188,11 @@ async function tableGenerator(context, state, map) {
     });
     // Funcionalidad para descargar CSV
     downloadButton.addEventListener('click', async () => {
-        table.download("csv", "table_data.csv");
+        if (state.variable) {
+            table.download("csv", "table_data.csv");
+        } else {
+            alert("Primero seleccione una especie");
+        }
     });
     // Funcionalidad con Enter
     document.addEventListener('keydown', function (event) {

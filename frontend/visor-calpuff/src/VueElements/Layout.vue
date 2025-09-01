@@ -2,7 +2,7 @@
   <div style="height: 100%;"> 
     <el-splitter>
 
-      <el-splitter-panel size="35%" style="border-right:5px solid silver">
+      <el-splitter-panel size="45%" style="border-right:5px solid silver">
 
         <div id="vue-panel-table" class="box" v-loading="loading3" element-loading-text="Un momento..." 
           element-loading-background="rgba(255, 255, 255, 0.4)">
@@ -10,7 +10,7 @@
       
       </el-splitter-panel>
 
-      <el-splitter-panel size="65%">
+      <el-splitter-panel size="55%">
 
         <el-splitter layout="vertical">
           <el-splitter-panel size="65%" style="border-bottom:5px solid silver">
@@ -67,9 +67,6 @@ onMounted(() => {
 }
 #vue-panel-serie {
   height: 100%;
-  padding-top: 10px;
-  padding-left: 22px;
-  padding-right: 10px;
 }
 #vue-panel-table {
   padding-left: 5px;

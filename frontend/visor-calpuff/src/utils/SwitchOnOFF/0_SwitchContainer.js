@@ -31,10 +31,13 @@ export class SwitchFactory {
             fontSize: '9px',
             color: 'black',
         })
+
         window.addEventListener('darkMode', (event) => {
             if (event.detail === true) {
+                input.classList.add('dark-mode');
                 label.style.color = 'white';
             } else {
+                input.classList.remove('dark-mode');
                 label.style.color = 'black';
             }
         });

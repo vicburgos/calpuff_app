@@ -19,7 +19,7 @@ async function domainGenerator(context, state, map) {
 
     async function setBorder() {
         // HARD CODE para la variable lat-lon
-        let varReference = state.variable || 'mp10_hd_lon';
+        let varReference = 'mp10_hd_lon'
         const Data  = await state.getData(state.domain, state.instance, varReference);
         const nx = Data.nx;
         const ny = Data.ny;

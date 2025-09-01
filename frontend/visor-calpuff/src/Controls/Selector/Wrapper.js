@@ -5,8 +5,6 @@ import { domainSelector } from './Domain.js';
 function selectorGenerator(context, state){
 
     const dateSelectorInstance     = dateSelector(context, state);
-    // const domainSelectorInstance = domainSelector(context, state);
-    const variableSelectorInstance = variableSelector(context, state);
 
     const wrapper = document.createElement('div');
     wrapper.id = 'selector-container';
@@ -17,17 +15,15 @@ function selectorGenerator(context, state){
         gap: '5px',
         userSelect: 'none',
         fontSize: '12px',
-        height: '30px',
-        borderRadius: '5px',
         paddingLeft: '5px',
         paddingRight: '5px',
         backgroundColor: 'rgba(255, 255, 255, 1)',
-        border: '1px solid rgba(0, 0, 0, 1)',
+        borderRadius: "5px",
+        border: "1.5px solid rgb(118, 118, 118)",
     });
 
     wrapper.appendChild(dateSelectorInstance);
-    // wrapper.appendChild(domainSelectorInstance);
-    // wrapper.appendChild(variableSelectorInstance);
+
     return wrapper;
 }
 

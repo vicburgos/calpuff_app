@@ -66,11 +66,14 @@ export class State extends EventTarget {
     get level()    { return this.#level;   }
 
     async init() {
-        await this.loadInstances();
-        await this.loadVariables();
+        // Default values
+        const dafaultInstance = null;
+        const dafaultVariable = 'mp10_hd_species';
+        await this.loadInstances(dafaultInstance);
+        await this.loadVariables(dafaultVariable);
     }
     
-    async loadInstances() {
+    async loadInstances(dafaultDate=null) {
         if (!this.#domain) {
             this.#instance = null;
             this.instances = [];
@@ -79,22 +82,30 @@ export class State extends EventTarget {
             const json = await res.json();
             this.instances = json.instances || [];
 
-            if (!this.instances.includes(this.#instance)) {
-                const value = this.instances.sort()[this.instances.length-1] || null;
-                this.instance = value;
+            if (dafaultDate && this.instances.includes(dafaultDate)) {
+                this.instance = dafaultDate;
+            }
+            else {
+                if (!this.instances.includes(this.#instance)) {
+                    this.instance = this.instances.sort()[this.instances.length-1] || null;
+                }
             }
         }
         this.dispatchEvent(new CustomEvent("options:instances", { detail: this.instances }));
     }
 
 
-    async loadVariables() {
+    async loadVariables(dafaultVariable=null) {
         if (!this.#domain || !this.#instance) {
             this.variables = [];
         } else {
             const res = await fetch(`/api/variables/?domain=${this.#domain}&instance=${this.#instance}`);
             const json = await res.json();
             this.variables = json.variables || [];
+
+            if (dafaultVariable && this.variables.includes(dafaultVariable)) {
+                this.variable = dafaultVariable;
+            }
 
         }
         this.dispatchEvent(new CustomEvent("options:variables", { detail: this.variables }));

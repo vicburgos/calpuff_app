@@ -57,7 +57,6 @@ async function main() {
     position: 'absolute',
     top: '10px',
     left: '10px',
-    height: '35px',
   });
   mapContainer.appendChild(selectorContainer);  
 
@@ -65,6 +64,7 @@ async function main() {
   const [tableHtml, loadButton, downloadButton] = await tableGenerator(context, state, map);
   const titleTable = document.createElement('h6');
   titleTable.textContent = "Fuentes Emisoras";
+  titleTable.style.userSelect = 'none';
   panelTable.appendChild(titleTable);
   panelTable.appendChild(tableHtml);
   panelTable.appendChild(downloadButton);
